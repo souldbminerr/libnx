@@ -61,3 +61,26 @@ Result clkrstGetPossibleClockRates(ClkrstSession *session, u32 *rates, s32 max_c
 
     return rc;
 }
+
+Result clkrstGetDvfsTable(ClkrstSession *session, u32 *voltage_table, s32 voltage_count, u32 *freq_table, s32 freq_count, s32 *out_count) {
+    const struct {
+        s32 voltage_count;
+        s32 freq_count;
+    } in = { voltage_count, freq_count };
+
+    s32 out = 0;
+    Result rc = serviceDispatchInOut(&session->s, 11, in, out,
+        .buffer_attrs = {
+            SfBufferAttr_Out | SfBufferAttr_HipcMapAlias,
+            SfBufferAttr_Out | SfBufferAttr_HipcMapAlias,
+        },
+        .buffers = {
+            { freq_table,    freq_count    * sizeof(u32) },
+            { voltage_table, voltage_count * sizeof(u32) },
+        },
+    );
+    if (R_SUCCEEDED(rc) && out_count) 
+        *out_count = out;
+    return rc;
+}
+
